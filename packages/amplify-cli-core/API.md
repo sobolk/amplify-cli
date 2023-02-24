@@ -114,32 +114,6 @@ export abstract class AmplifyCategoryTransform {
 }
 
 // @public (undocumented)
-const amplifyCLIConstants: Readonly<{
-    readonly AmplifyCLIDirName: "amplify";
-    readonly DotAmplifyDirName: ".amplify";
-    readonly DotConfigAmplifyCLISubDirName: ".config";
-    readonly BackendAmplifyCLISubDirName: "backend";
-    readonly CurrentCloudBackendAmplifyCLISubDirName: "#current-cloud-backend";
-    readonly ProjectConfigFileName: "project-config.json";
-    readonly amplifyMetaFileName: "amplify-meta.json";
-    readonly CliName: "amplify";
-    readonly DateTimeFormatString: "YYYY-MM-DD-HH-mm-ss";
-    readonly DateTimeFormatStringCompact: "YYYYMMDDHHmmss";
-    readonly DefaultAWSAccessKeyId: "<YOUR_ACCESS_KEY_ID>";
-    readonly DefaultAWSSecretAccessKey: "<YOUR_SECRET_ACCESS_KEY>";
-    readonly DefaultAWSRegion: "us-east-1";
-    readonly LocalEnvFileName: "local-env-info.json";
-    readonly ProviderInfoFileName: "team-provider-info.json";
-    readonly BackendConfigFileName: "backend-config.json";
-    readonly TagsFileName: "tags.json";
-    readonly MIN_MIGRATION_PROJECT_CONFIG_VERSION: "3.0";
-    readonly MIN_NODE12_PROJECT_CONFIG_VERSION: "3.1";
-    readonly CURRENT_PROJECT_CONFIG_VERSION: "3.1";
-    readonly BreadcrumbsFileName: "amplify.state";
-    readonly LogDirectory: ".amplify-log";
-}>;
-
-// @public (undocumented)
 export class AmplifyError extends AmplifyException {
     constructor(name: AmplifyErrorType, options: AmplifyExceptionOptions, downstreamException?: Error);
 }
@@ -403,9 +377,6 @@ export enum CFNTemplateFormat {
 }
 
 // @public (undocumented)
-const checkIfAuthExists: () => boolean;
-
-// @public (undocumented)
 export interface CLIContext {
     // (undocumented)
     getEnvInfo: () => $TSAny;
@@ -554,9 +525,6 @@ export const commandsInfo: Array<CommandInfo>;
 // @public (undocumented)
 export class ConfigurationError extends Error {
 }
-
-// @public (undocumented)
-function confirmPrompt(message: string, defaultValue?: boolean): Promise<any>;
 
 // @public (undocumented)
 export const constants: {
@@ -978,9 +946,6 @@ const getProjectMeta: () => $TSMeta;
 export function green(message: string): void;
 
 // @public (undocumented)
-const handleValidGraphQLAuthError: (context: $TSContext, message: string) => Promise<boolean>;
-
-// @public (undocumented)
 export type HookEvent = {
     command: string;
     subCommand?: string;
@@ -1298,9 +1263,6 @@ export const isPackaged: boolean;
 
 // @public (undocumented)
 export const isResourceNameUnique: (category: string, resourceName: string, throwOnMatch?: boolean) => boolean;
-
-// @public (undocumented)
-const isValidGraphQLAuthError: (message: string) => boolean;
 
 // @public (undocumented)
 export const isWindowsPlatform: () => boolean;
@@ -2140,11 +2102,7 @@ export type TimedCodePath = ManuallyTimedCodePath | UntilExitTimedCodePath | Fro
 
 declare namespace toolkitExtensions {
     export {
-        isValidGraphQLAuthError,
-        handleValidGraphQLAuthError,
-        checkIfAuthExists,
-        confirmPrompt,
-        amplifyCLIConstants,
+        toolkitExtensions_2 as toolkitExtensions,
         constructExeInfo,
         copyBatch,
         getAllCategoryPluginInfo,
@@ -2164,6 +2122,38 @@ declare namespace toolkitExtensions {
     }
 }
 export { toolkitExtensions }
+
+// @public (undocumented)
+const toolkitExtensions_2: {
+    amplifyCLIConstants: Readonly<{
+        readonly AmplifyCLIDirName: "amplify";
+        readonly DotAmplifyDirName: ".amplify";
+        readonly DotConfigAmplifyCLISubDirName: ".config";
+        readonly BackendAmplifyCLISubDirName: "backend";
+        readonly CurrentCloudBackendAmplifyCLISubDirName: "#current-cloud-backend";
+        readonly ProjectConfigFileName: "project-config.json";
+        readonly amplifyMetaFileName: "amplify-meta.json";
+        readonly CliName: "amplify";
+        readonly DateTimeFormatString: "YYYY-MM-DD-HH-mm-ss";
+        readonly DateTimeFormatStringCompact: "YYYYMMDDHHmmss";
+        readonly DefaultAWSAccessKeyId: "<YOUR_ACCESS_KEY_ID>";
+        readonly DefaultAWSSecretAccessKey: "<YOUR_SECRET_ACCESS_KEY>";
+        readonly DefaultAWSRegion: "us-east-1";
+        readonly LocalEnvFileName: "local-env-info.json";
+        readonly ProviderInfoFileName: "team-provider-info.json";
+        readonly BackendConfigFileName: "backend-config.json";
+        readonly TagsFileName: "tags.json";
+        readonly MIN_MIGRATION_PROJECT_CONFIG_VERSION: "3.0";
+        readonly MIN_NODE12_PROJECT_CONFIG_VERSION: "3.1";
+        readonly CURRENT_PROJECT_CONFIG_VERSION: "3.1";
+        readonly BreadcrumbsFileName: "amplify.state";
+        readonly LogDirectory: ".amplify-log";
+    }>;
+    confirmPrompt(message: string, defaultValue?: boolean): Promise<any>;
+    isValidGraphQLAuthError: (message: string) => boolean;
+    handleValidGraphQLAuthError: (context: $TSContext, message: string) => Promise<boolean>;
+    checkIfAuthExists: () => boolean;
+};
 
 // @public (undocumented)
 export type TypeDef = {

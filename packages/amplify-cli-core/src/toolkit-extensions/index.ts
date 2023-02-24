@@ -1,6 +1,6 @@
-export * from './apply-auth-mode';
-export * from './confirm-prompt';
-export * from './constants';
+import * as applyAuthMode from './apply-auth-mode';
+import * as confirmPrompt from './confirm-prompt';
+import * as constants from './constants';
 export * from './construct-exeInfo';
 export * from './copy-batch';
 export * from './get-all-category-pluginInfos';
@@ -16,3 +16,7 @@ export * from './get-plugin';
 export * from './get-project-config';
 export * from './get-project-details';
 export * from './get-project-meta';
+
+export const toolkitExtensions = {
+  ...applyAuthMode, ...confirmPrompt, ...constants
+}
