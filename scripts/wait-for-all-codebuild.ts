@@ -27,10 +27,15 @@ const getIncompleteJobIdsFromBatchId = async (cb: CodeBuild, batchId: string): P
 const main = async () => {
   const cb = new CodeBuild({ region: 'us-east-1' });
   const expectedSourceVersion = process.argv[2];
-  const jobsDependedOnFilepath = process.argv[3];
+  const jobsDependedOnFilepathOrId = process.argv[3];
   const codeBuildProjectName = process.argv[4];
-  const jobsDependedOnRaw = fs.readFileSync(jobsDependedOnFilepath, 'utf8');
-  const jobsDependedOn = JSON.parse(jobsDependedOnRaw);
+  let jobsDependedOn: string[];
+  if (fs.existsSync(jobsDependedOnFilepathOrId)) {
+    const jobsDependedOnRaw = fs.readFileSync(jobsDependedOnFilepathOrId, 'utf8');
+    jobsDependedOn = JSON.parse(jobsDependedOnRaw);
+  } else {
+    jobsDependedOn = [jobsDependedOnFilepathOrId];
+  }
   console.log(`Depending on these jobs: ${JSON.stringify(jobsDependedOn)}`);
   console.log(`Number of jobs depended on: ${jobsDependedOn.length}`);
   const allBatchBuildIds = await getBatchesInProject(cb, codeBuildProjectName);
