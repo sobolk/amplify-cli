@@ -679,6 +679,36 @@ export class AmplifyAuthCognitoStack extends cdk.Stack implements AmplifyAuthCog
   };
 
   /**
+   * updates  cognito userpool client with OAuth settings
+   */
+  updateUserPoolClientWithOAuthSettings = (props: CognitoStackOptions): void => {
+    const oAuthMetaData = JSONUtilities.parse<OAuthMetaData>(props.oAuthMetadata);
+    let hostedUIProviderMeta;
+    let supportedIdentityProviders: string[] = [];
+    if (!_.isEmpty(props.hostedUIProviderMeta)) {
+      hostedUIProviderMeta = JSONUtilities.parse<Array<$TSAny>>(props.hostedUIProviderMeta);
+      supportedIdentityProviders = hostedUIProviderMeta.map((provider: { ProviderName: string }) => provider.ProviderName);
+    }
+    supportedIdentityProviders.push('COGNITO');
+    if (this.userPoolClient) {
+      this.userPoolClient.allowedOAuthFlowsUserPoolClient = true;
+      this.userPoolClient.allowedOAuthScopes = oAuthMetaData?.AllowedOAuthScopes;
+      this.userPoolClient.allowedOAuthFlows = oAuthMetaData?.AllowedOAuthFlows;
+      this.userPoolClient.callbackUrLs = oAuthMetaData?.CallbackURLs;
+      this.userPoolClient.logoutUrLs = oAuthMetaData?.LogoutURLs;
+      this.userPoolClient.supportedIdentityProviders = supportedIdentityProviders;
+    }
+    if (this.userPoolClientWeb) {
+      this.userPoolClientWeb.allowedOAuthFlowsUserPoolClient = true;
+      this.userPoolClientWeb.allowedOAuthScopes = oAuthMetaData?.AllowedOAuthScopes;
+      this.userPoolClientWeb.allowedOAuthFlows = oAuthMetaData?.AllowedOAuthFlows;
+      this.userPoolClientWeb.callbackUrLs = oAuthMetaData?.CallbackURLs;
+      this.userPoolClientWeb.logoutUrLs = oAuthMetaData?.LogoutURLs;
+      this.userPoolClientWeb.supportedIdentityProviders = supportedIdentityProviders;
+    }
+  };
+
+  /**
    * Updates the custom lambda to delete existing userPool domain
    */
   deleteExistingHostedUICustomResource(): void {
