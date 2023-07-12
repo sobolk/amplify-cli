@@ -14,12 +14,15 @@ import {
   setupUser,
   signInUser,
   signOutUser,
+  getUserPool,
+  listSocialIdpProviders,
   updateHeadlessAuth,
+  addAuthWithDefault,
 } from '@aws-amplify/amplify-e2e-core';
-import { UpdateAuthRequest } from 'amplify-headless-interface';
 import { validateVersionsForMigrationTest } from '../../migration-helpers';
-import { expectLambdasInCfnTemplate, expectNoLambdasInCfnTemplate } from '../../migration-helpers-v12/auth-helpers/utilities';
+import { expectLambdasInCfnTemplate, migratedLambdas, nonMigratedLambdas } from '../../migration-helpers-v12/auth-helpers/utilities';
 import { initJSProjectWithProfileV12 } from '../../migration-helpers-v12/init';
+import { UpdateAuthRequest } from 'amplify-headless-interface';
 
 const defaultsSettings = {
   name: 'authTest',
@@ -49,7 +52,7 @@ describe('lambda callouts', () => {
     await addAuthWithMaxOptions(projRoot, { name: resourceName });
 
     const preMigrationTemplate = await getCloudFormationTemplate(projRoot, 'auth', resourceName);
-    expectLambdasInCfnTemplate(preMigrationTemplate);
+    expectLambdasInCfnTemplate(preMigrationTemplate, migratedLambdas.concat(nonMigratedLambdas), []);
 
     // push with latest should regenerate auth stack and start migrating lambda callouts
     await amplifyPushAuth(projRoot, true);
@@ -58,23 +61,20 @@ describe('lambda callouts', () => {
     await amplifyPushForce(projRoot, true);
 
     const postMigrationTemplate = await getCloudFormationTemplate(projRoot, 'auth', resourceName);
-    expectNoLambdasInCfnTemplate(postMigrationTemplate);
+    expectLambdasInCfnTemplate(postMigrationTemplate, nonMigratedLambdas, migratedLambdas);
 
-    // revert back to previous CLI version
+    // revert to previous CLI version
     await amplifyPushForce(projRoot, false);
 
     const revertTemplate = await getCloudFormationTemplate(projRoot, 'auth', resourceName);
-    expectLambdasInCfnTemplate(revertTemplate);
+    expectLambdasInCfnTemplate(revertTemplate, migratedLambdas.concat(nonMigratedLambdas), []);
   });
 
-  it('should migrate when force pushing without affecting userpool functionality', async () => {
+  it('should migrate when force pushing without affecting user pool functionality', async () => {
     await initJSProjectWithProfileV12(projRoot, defaultsSettings);
 
     const resourceName = `test${generateRandomShortId()}`;
     await addAuthWithMaxOptions(projRoot, { name: resourceName });
-
-    const preMigrationTemplate = await getCloudFormationTemplate(projRoot, 'auth', resourceName);
-    expectLambdasInCfnTemplate(preMigrationTemplate);
 
     await amplifyPushAuth(projRoot, false);
 
@@ -90,14 +90,14 @@ describe('lambda callouts', () => {
 
     const username = 'testUser';
     const password = 'Password12#';
-    await setupUser(UserPoolId, username, 'Password12#', 'userPoolGroup1');
+    await setupUser(UserPoolId, username, 'Password12#', 'userPoolGroup1', region);
 
     await signInUser(username, password);
     await signOutUser();
 
     await amplifyPushForce(projRoot, true);
 
-    const users = await listUsersInUserPool(UserPoolId, region);
+    let users = await listUsersInUserPool(UserPoolId, region);
     expect(users).toEqual([username.toLowerCase()]);
 
     await signInUser(username, password);
@@ -105,14 +105,44 @@ describe('lambda callouts', () => {
 
     await amplifyPushForce(projRoot, true);
 
+    users = await listUsersInUserPool(UserPoolId, region);
+    expect(users).toEqual([username.toLowerCase()]);
+
     await signInUser(username, password);
     await signOutUser();
   });
 
-  it('should be migrated when set up using headless commands', async () => {
+  it('should keep identity providers and domain during migration', async () => {
     await initJSProjectWithProfileV12(projRoot, defaultsSettings);
+
     const resourceName = `test${generateRandomShortId()}`;
     await addAuthWithMaxOptions(projRoot, { name: resourceName });
+
+    await amplifyPushAuth(projRoot, false);
+
+    const meta = getProjectMeta(projRoot);
+    const region = meta.providers.awscloudformation.Region;
+    const { UserPoolId } = Object.keys(meta.auth)
+      .map((key) => meta.auth[key])
+      .find((auth) => auth.service === 'Cognito').output;
+    const userPoolRes1 = await getUserPool(UserPoolId, region);
+    const userPoolDomainV12 = userPoolRes1.UserPool.Domain;
+    const socialIdpProvidersV12 = await listSocialIdpProviders(UserPoolId, region);
+
+    await amplifyPushForce(projRoot, true);
+
+    const userPoolRes2 = await getUserPool(UserPoolId, region);
+    const userPoolDomainLatest = userPoolRes2.UserPool.Domain;
+    const socialIdpProvidersLatest = await listSocialIdpProviders(UserPoolId, region);
+    // check same domain should exist
+    expect(userPoolDomainV12).toEqual(userPoolDomainLatest);
+    // check the Social Idp Provider exists
+    expect(socialIdpProvidersV12).toEqual(socialIdpProvidersLatest);
+  });
+
+  it('should be migrated when updating using headless commands', async () => {
+    await initJSProjectWithProfileV12(projRoot, defaultsSettings);
+    await addAuthWithDefault(projRoot, false);
     await amplifyPushAuth(projRoot, false);
 
     const updateAuthRequest: UpdateAuthRequest = {
@@ -120,6 +150,11 @@ describe('lambda callouts', () => {
       serviceModification: {
         serviceName: 'Cognito',
         userPoolModification: {
+          autoVerifiedAttributes: [
+            {
+              type: 'EMAIL',
+            },
+          ],
           userPoolGroups: [
             {
               groupName: 'group1',
@@ -128,6 +163,18 @@ describe('lambda callouts', () => {
               groupName: 'group2',
             },
           ],
+          oAuth: {
+            domainPrefix: generateRandomShortId(),
+            redirectSigninURIs: ['http://localhost/'],
+            redirectSignoutURIs: ['http://localhost/'],
+            socialProviderConfigurations: [
+              {
+                provider: 'FACEBOOK',
+                clientId: '1234',
+                clientSecret: '5678',
+              },
+            ],
+          },
         },
         includeIdentityPool: true,
         identityPoolModification: {
@@ -140,7 +187,9 @@ describe('lambda callouts', () => {
     await amplifyPushAuth(projRoot, true);
     await amplifyPushForce(projRoot, true);
 
+    const meta = getProjectMeta(projRoot);
+    const resourceName = Object.keys(meta.auth)[0];
     const template = await getCloudFormationTemplate(projRoot, 'auth', resourceName);
-    expectNoLambdasInCfnTemplate(template);
+    expectLambdasInCfnTemplate(template, nonMigratedLambdas, migratedLambdas);
   });
 });
