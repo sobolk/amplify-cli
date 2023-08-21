@@ -18,6 +18,7 @@ import { Stopwatch } from './stopwatch';
 
 /**
  * Provides methods for collecting interactive customer responses from the shell
+ * This is a test
  */
 class AmplifyPrompter implements Prompter {
   flowData: IFlowData | undefined; // interactive cli flow data journal
