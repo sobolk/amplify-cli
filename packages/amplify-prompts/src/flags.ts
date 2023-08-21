@@ -19,5 +19,6 @@ export const isInteractiveShell = process.stdin.isTTY;
 
 /**
  * If this flag is set, printer will trim non ASCI characters from the output.
+ * This is a test.
  */
 export const isHeadless = process.argv.includes('--headless');
